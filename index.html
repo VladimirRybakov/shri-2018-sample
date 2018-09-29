@@ -1,0 +1,182 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width">
+
+        <style>
+            body {
+                margin: 0;
+            }
+
+            * {
+                box-sizing: border-box;
+                font-family: Verdana;
+            }
+
+            #theContainer {
+                width: 100%;
+                max-width: 800px;
+                margin: auto;
+
+                padding-top: 20px;
+                overflow-x: hidden;
+            }
+
+            .notification-container {
+                width: 100%;
+                height: 64px;
+                background-color: rgba(0, 0, 255, 0.1);
+                position: relative;
+                transition: height .5s ease .2s;
+            }
+
+            .notification-container_moved {
+                height: 0;
+            }
+
+            .notification-container_moved .notification-container__button {
+                height: 0;
+                display: none;
+            }
+
+            .notification-container__button {
+                position: absolute;
+                width: 64px;
+                height: 64px;
+                top: 0;
+                background-size: 50%;
+                background-position: center;
+                background-repeat: no-repeat;
+                transition: height .5s ease .2s;
+                cursor: pointer;
+
+                right: 0;
+                background-image: url('./emoticon-devil.svg');
+
+            }
+
+            .notification-container__button-second {
+                right: 64px;
+                background-image: url('./emoticon-cool.svg');
+            }
+
+            .notification-container__message {
+                position: absolute;
+                height: 64px;
+                background-color: rgba(255, 255, 255, 0.9);
+
+                padding: 12px;
+                user-select: none;
+                touch-action: none;
+            }
+
+            .notification-container__message_moved-left {
+                left: 0;
+                transition: transform .5s ease;
+                transform: translateX(-100%);
+            }
+
+            .notification-container__message_moved-right {
+                left: 0;
+                transition: transform .5s ease;
+                transform: translateX(100%);
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div id="theContainer">
+        </div>
+
+        <script>
+            const theContainer = document.querySelector('#theContainer');
+
+            const addNotification = (messageText = 'This is sample notification') => {
+                const container = document.createElement('div');
+                container.className = 'notification-container';
+                theContainer.appendChild(container);
+
+                const button = document.createElement('div');
+                button.className = 'notification-container__button';
+                container.appendChild(button);
+
+                const button2 = document.createElement('div');
+                button2.className = 'notification-container__button notification-container__button-second';
+                container.appendChild(button2);
+
+                const message = document.createElement('div');
+                message.className = 'notification-container__message';
+                const containerWidth = container.offsetWidth;
+                message.style.width = `${containerWidth}px`;
+                message.innerText = messageText;
+                container.appendChild(message);
+
+                let currentGesture = null;
+
+                const nodeState = {
+                    buttonWidth: 64,
+                    startPosition: 0,
+                };
+
+                message.addEventListener('pointerdown', (event) => {
+                    message.style.transition = 'none';
+
+                    // Нужно для десктопа чтобы поймать pointerup вне DOM-ноды
+                    message.setPointerCapture(event.pointerId);
+
+                    currentGesture = {
+                        startX: event.x,
+                        prevX: event.x,
+                        prevTs: Date.now(),
+                        startPosition: nodeState.startPosition,
+                    };
+                });
+
+                message.addEventListener('pointermove', (event) => {
+                    if (!currentGesture) {
+                        return
+                    }
+
+                    const {startX, prevX, prevTs, startPosition} = currentGesture;
+                    const {x} = event;
+                    const dx = x - startX;
+                    message.style.left = startPosition + dx;
+
+                    const ts = Date.now();
+                    const speed = Math.abs(x - prevX) / (ts - prevTs);
+
+                    if (speed > 5 && ts !== prevTs) {
+                        container.className = `${container.className} notification-container_moved`;
+                        message.className = `${message.className} notification-container__message_moved-${dx > 0 ? 'right' : 'left'}`;
+                        currentGesture = null;
+                        return;
+                    }
+
+                    currentGesture.prevX = x;
+                    currentGesture.prevTs = ts;
+                    nodeState.startPosition = dx < -1.5 * nodeState.buttonWidth ? -2 * nodeState.buttonWidth : 0;
+                });
+
+                const moveToStartPosition = () => {
+                    if (!currentGesture) {
+                        return
+                    }
+
+                    currentGesture = null;
+                    message.style.transition = 'left ease .5s';
+                    message.style.left = nodeState.startPosition;
+                }
+
+                message.addEventListener('pointerup', moveToStartPosition);
+                message.addEventListener('pointercancel', moveToStartPosition);
+
+            }
+
+            addNotification('Привет!!! Поздравляю студентов ШРИ-2018!!!');
+            addNotification('Это пример к лекции о сенсорном вводе');
+            addNotification('В коде можно найти пример реализации пары жестов');
+            addNotification('Уведомление можно сдвинуть вправо или влево');
+            addNotification('Можно удалить элемент списка если быстро смахнуть его');
+        </script>
+    </body>
+</html>
