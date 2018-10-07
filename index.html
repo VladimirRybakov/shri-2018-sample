@@ -1,6 +1,8 @@
 <html>
     <head>
+        <meta charset = "utf-8" >
         <meta name="viewport" content="width=device-width">
+        <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
 
         <style>
             body {
@@ -33,7 +35,8 @@
                 height: 0;
             }
 
-            .notification-container_moved .notification-container__button {
+            .notification-container_moved
+            .notification-container__button {
                 height: 0;
                 display: none;
             }
@@ -66,6 +69,7 @@
 
                 padding: 12px;
                 user-select: none;
+                -webkit-user-select: none;
                 touch-action: none;
             }
 
@@ -106,6 +110,7 @@
 
                 const message = document.createElement('div');
                 message.className = 'notification-container__message';
+                message.setAttribute('touch-action', 'none');
                 const containerWidth = container.offsetWidth;
                 message.style.width = `${containerWidth}px`;
                 message.innerText = messageText;
@@ -130,12 +135,16 @@
                         prevTs: Date.now(),
                         startPosition: nodeState.startPosition,
                     };
+
+                    console.log(event.type);
                 });
 
                 message.addEventListener('pointermove', (event) => {
                     if (!currentGesture) {
                         return
                     }
+
+                    console.log(event.type);
 
                     const {startX, prevX, prevTs, startPosition} = currentGesture;
                     const {x} = event;
@@ -146,8 +155,11 @@
                     const speed = Math.abs(x - prevX) / (ts - prevTs);
 
                     if (speed > 5 && ts !== prevTs) {
-                        container.className = `${container.className} notification-container_moved`;
-                        message.className = `${message.className} notification-container__message_moved-${dx > 0 ? 'right' : 'left'}`;
+                        container.className =
+                            `${container.className} notification-container_moved`;
+                        message.className =
+                            `${message.className}
+                            notification-container__message_moved-${dx > 0 ? 'right' : 'left'}`;
                         currentGesture = null;
                         return;
                     }
@@ -157,10 +169,12 @@
                     nodeState.startPosition = dx < -1.5 * nodeState.buttonWidth ? -2 * nodeState.buttonWidth : 0;
                 });
 
-                const moveToStartPosition = () => {
+                const moveToStartPosition = (event) => {
                     if (!currentGesture) {
                         return
                     }
+
+                    console.log(event.type);
 
                     currentGesture = null;
                     message.style.transition = 'left ease .5s';
